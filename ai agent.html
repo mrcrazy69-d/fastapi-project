@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Offline AI Assistant</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #333;
+    }
+    .form-field {
+      margin: 0.5rem 0;
+      width: 100%;
+      max-width: 600px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    textarea {
+      height: 100px;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .response {
+      margin-top: 2rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background: #fff;
+      max-width: 600px;
+      white-space: pre-wrap;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Offline AI Assistant</h1>
+
+  <div class="form-field">
+    <input type="text" id="username" placeholder="Username (e.g. admin)" />
+  </div>
+  <div class="form-field">
+    <input type="password" id="password" placeholder="Password (e.g. pass123)" />
+  </div>
+  <div class="form-field">
+    <textarea id="question" placeholder="Ask your question here...">get all users</textarea>
+  </div>
+  <button onclick="askAgent()">Ask</button>
+
+  <div class="response" id="responseBox"></div>
+
+  <script>
+    function encodeBasicAuth(username, password) {
+      return 'Basic ' + btoa(username + ':' + password);
+    }
+
+    async function askAgent() {
+      const question = document.getElementById('question').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const responseBox = document.getElementById('responseBox');
+
+      if (!username || !password) {
+        responseBox.innerText = '❗ Please enter both username and password.';
+        return;
+      }
+
+      responseBox.innerText = 'Thinking...';
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/agent/ask', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': encodeBasicAuth(username, password)
+          },
+          body: JSON.stringify({ question })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Server responded with ${res.status}: ${errText}`);
+        }
+
+        const data = await res.json();
+        responseBox.innerText = data.answer || JSON.stringify(data);
+      } catch (err) {
+        responseBox.innerText = '❌ Error: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
